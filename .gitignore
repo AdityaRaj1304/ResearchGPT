@@ -216,3 +216,27 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+
+# ==========================================
+# ResearchGPT - ML, Data & Vector DB Additions
+# ==========================================
+# Raw and processed datasets
+data/
+
+# Heavy data formats
+*.parquet
+*.pdf
+*.csv
+*.jsonl
+
+# Vector Store Indices (FAISS / Chromadb, etc.)
+*.index
+*.pkl
+*.pickle
+
+# Local Model Weights & Tokenizers
+models/
+*.safetensors
+*.bin
+*.h5
