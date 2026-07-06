@@ -1,4 +1,4 @@
-# Planning.md: ResearchGPT Project Roadmap
+# ResearchGPT Project Roadmap
 
 ResearchGPT is an end-to-end Semantic Search and Retrieval-Augmented Generation (RAG) system designed to index, vectorize, and search academic literature from arXiv. The system allows users to execute natural language queries against an optimized vector corpus of cutting-edge AI research papers.
 
