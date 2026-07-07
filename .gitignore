@@ -236,8 +236,12 @@ data/
 *.pickle
 
 # Local Model Weights & Tokenizers
-models/
+/models/
 !src/models/
 *.safetensors
 *.bin
 *.h5
+
+# Master exception: Never ignore anything inside the source code directory
+!src/
+!src/**
