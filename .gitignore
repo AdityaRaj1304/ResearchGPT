@@ -237,6 +237,7 @@ data/
 
 # Local Model Weights & Tokenizers
 models/
+!src/models/
 *.safetensors
 *.bin
 *.h5
