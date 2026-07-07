@@ -223,7 +223,7 @@ __marimo__/
 # ==========================================
 # Raw and processed datasets
 data/
-
+!data/evaluation/
 # Heavy data formats
 *.parquet
 *.pdf
