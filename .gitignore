@@ -221,14 +221,19 @@ __marimo__/
 # ==========================================
 # ResearchGPT - ML, Data & Vector DB Additions
 # ==========================================
-# Raw and processed datasets
-data/
-!data/evaluation/
-# Heavy data formats
-*.parquet
-*.pdf
-*.csv
-*.jsonl
+# Allow the data folder structure
+!/data/
+
+# Explicitly ignore the heavy raw subfolder (PDFs)
+/data/raw/
+
+# Explicitly ignore your local ChromaDB vector store binaries
+/data/vector_store/
+
+# Ensure evaluation benchmarks and processed parquets are tracked
+/data/evaluation/
+!/data/processed/
+
 
 # Vector Store Indices (FAISS / Chromadb, etc.)
 *.index
