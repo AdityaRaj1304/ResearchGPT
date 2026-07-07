@@ -1,0 +1,127 @@
+[
+  {
+    "id": "q1",
+    "query": "retrieval augmented generation chunking strategies",
+    "expected_keywords": ["retrieval", "generation", "rag", "chunking", "semantic"]
+  },
+  {
+    "id": "q2",
+    "query": "low rank adaptation fine tuning large language models",
+    "expected_keywords": ["qlora", "lora", "low-rank", "fine-tuning", "parameter-efficient"]
+  },
+  {
+    "id": "q3",
+    "query": "graph neural networks for tabular data processing",
+    "expected_keywords": ["graph", "gnn", "tabular", "nodes", "hyperbolic"]
+  },
+  {
+    "id": "q4",
+    "query": "token level hallucination detection in language models",
+    "expected_keywords": ["hallucination", "detection", "cortex", "token-level", "truthfulness"]
+  },
+  {
+    "id": "q5",
+    "query": "agent memory evaluation baselines and confounds",
+    "expected_keywords": ["agent", "memory", "baseline", "confounds", "memdelta"]
+  },
+  {
+    "id": "q6",
+    "query": "compact language models efficiency and performance",
+    "expected_keywords": ["compact", "small", "efficiency", "size", "performance"]
+  },
+  {
+    "id": "q7",
+    "query": "graph-augmented RAG multi-hop reasoning knowledge graphs",
+    "expected_keywords": ["graph-augmented", "multi-hop", "reasoning", "knowledge", "tigrag"]
+  },
+  {
+    "id": "q8",
+    "query": "adaptive budgeted retrieval frameworks for qa systems",
+    "expected_keywords": ["adaptive", "budgeted", "budget", "ab-rag", "confidence"]
+  },
+  {
+    "id": "q9",
+    "query": "transformer geometry and internal representational similarity",
+    "expected_keywords": ["geometry", "internal", "representational", "similarity", "tgo-ii"]
+  },
+  {
+    "id": "q10",
+    "query": "generalization analysis of transformers in distribution regression",
+    "expected_keywords": ["generalization", "distribution", "regression", "theoretical", "bound"]
+  },
+  {
+    "id": "q11",
+    "query": "information regularized attention for visual centric reasoning",
+    "expected_keywords": ["attention", "regularized", "visual-centric", "reasoning", "vision"]
+  },
+  {
+    "id": "q12",
+    "query": "in-context learning with efficient transformers via domain generalization",
+    "expected_keywords": ["in-context", "efficient", "kernel", "generalization", "domain"]
+  },
+  {
+    "id": "q13",
+    "query": "reducing hallucination using comparative internal representations",
+    "expected_keywords": ["hallucination", "comparative", "representations", "internal", "cortex"]
+  },
+  {
+    "id": "q14",
+    "query": "token co-occurrence graphs for scalable RAG building",
+    "expected_keywords": ["co-occurrence", "graphs", "scalable", "token", "sliding-window"]
+  },
+  {
+    "id": "q15",
+    "query": "estimating model certainty and confidence signals in retrieval",
+    "expected_keywords": ["certainty", "confidence", "signals", "variance", "estimation"]
+  },
+  {
+    "id": "q16",
+    "query": "cluster-based semantic chunking performance on scientific texts",
+    "expected_keywords": ["cluster-based", "semantic", "chunking", "scientific", "preprocessing"]
+  },
+  {
+    "id": "q17",
+    "query": "vision transformers internal representations evolution",
+    "expected_keywords": ["vision", "transformers", "evolution", "geometric", "layers"]
+  },
+  {
+    "id": "q18",
+    "query": "contrastive decoding optimization for autoregressive generation",
+    "expected_keywords": ["contrastive", "decoding", "optimization", "generation", "autoregressive"]
+  },
+  {
+    "id": "q19",
+    "query": "parameter efficient scaling methods for open source architectures",
+    "expected_keywords": ["parameter-efficient", "scaling", "open-source", "architectures", "peft"]
+  },
+  {
+    "id": "q20",
+    "query": "quantization techniques for deploying deep models on edge hardware",
+    "expected_keywords": ["quantization", "deploying", "edge", "hardware", "bits"]
+  },
+  {
+    "id": "q21",
+    "query": "hnsw vector index configuration space similarity metrics",
+    "expected_keywords": ["hnsw", "vector", "index", "cosine", "space"]
+  },
+  {
+    "id": "q22",
+    "query": "evaluating multi-camera dynamic facial recognition architectures",
+    "expected_keywords": ["multi-camera", "dynamic", "facial", "recognition", "yolov8"]
+  },
+  {
+    "id": "q23",
+    "query": "cross-encoder self-attention vs bi-encoder distance calculation",
+    "expected_keywords": ["cross-encoder", "bi-encoder", "self-attention", "distance", "logits"]
+  },
+  {
+    "id": "q24",
+    "query": "sparse text indexing techniques using Okapi BM25 ranking",
+    "expected_keywords": ["sparse", "indexing", "okapi", "bm25", "ranking"]
+  },
+  {
+    "id": "q25",
+    "query": "reducing context rot in multi-page document parsing pipelines",
+    "expected_keywords": ["context", "rot", "multi-page", "parsing", "hierarchical"]
+  }
+]

@@ -1,0 +1,388 @@
+[
+  {
+    "id": "q1",
+    "query": "retrieval augmented generation chunking strategies",
+    "expected_keywords": [
+      "retrieval",
+      "generation",
+      "rag",
+      "chunking",
+      "semantic"
+    ],
+    "relevant_paper_ids": [
+      "2607.01852v1",
+      "2606.30093v1",
+      "2607.00570v1",
+      "2606.29090v1"
+    ]
+  },
+  {
+    "id": "q2",
+    "query": "low rank adaptation fine tuning large language models",
+    "expected_keywords": [
+      "qlora",
+      "lora",
+      "low-rank",
+      "fine-tuning",
+      "parameter-efficient"
+    ],
+    "relevant_paper_ids": [
+      "2607.02182v1",
+      "2606.31813v1",
+      "2607.01125v1",
+      "2606.29184v1"
+    ]
+  },
+  {
+    "id": "q3",
+    "query": "graph neural networks for tabular data processing",
+    "expected_keywords": [
+      "graph",
+      "gnn",
+      "tabular",
+      "nodes",
+      "hyperbolic"
+    ],
+    "relevant_paper_ids": [
+      "2607.02166v1"
+    ]
+  },
+  {
+    "id": "q4",
+    "query": "token level hallucination detection in language models",
+    "expected_keywords": [
+      "hallucination",
+      "detection",
+      "cortex",
+      "token-level",
+      "truthfulness"
+    ],
+    "relevant_paper_ids": [
+      "2606.31033v1",
+      "2606.29545v1",
+      "2607.00895v1",
+      "2607.01457v1"
+    ]
+  },
+  {
+    "id": "q5",
+    "query": "agent memory evaluation baselines and confounds",
+    "expected_keywords": [
+      "agent",
+      "memory",
+      "baseline",
+      "confounds",
+      "memdelta"
+    ],
+    "relevant_paper_ids": [
+      "2606.29914v1",
+      "2606.29824v1",
+      "2607.01709v1",
+      "2606.29788v1"
+    ]
+  },
+  {
+    "id": "q6",
+    "query": "compact language models efficiency and performance",
+    "expected_keywords": [
+      "compact",
+      "small",
+      "efficiency",
+      "size",
+      "performance"
+    ],
+    "relevant_paper_ids": [
+      "2606.30062v1",
+      "2606.29844v1"
+    ]
+  },
+  {
+    "id": "q7",
+    "query": "graph-augmented RAG multi-hop reasoning knowledge graphs",
+    "expected_keywords": [
+      "graph-augmented",
+      "multi-hop",
+      "reasoning",
+      "knowledge",
+      "tigrag"
+    ],
+    "relevant_paper_ids": [
+      "2606.30093v1",
+      "2606.30133v1",
+      "2606.29254v1",
+      "2607.00725v1"
+    ]
+  },
+  {
+    "id": "q8",
+    "query": "adaptive budgeted retrieval frameworks for qa systems",
+    "expected_keywords": [
+      "adaptive",
+      "budgeted",
+      "budget",
+      "ab-rag",
+      "confidence"
+    ],
+    "relevant_paper_ids": [
+      "2606.29959v1",
+      "2606.29090v1",
+      "2606.29706v1",
+      "2606.31519v1"
+    ]
+  },
+  {
+    "id": "q9",
+    "query": "transformer geometry and internal representational similarity",
+    "expected_keywords": [
+      "geometry",
+      "internal",
+      "representational",
+      "similarity",
+      "tgo-ii"
+    ],
+    "relevant_paper_ids": [
+      "2607.02386v1"
+    ]
+  },
+  {
+    "id": "q10",
+    "query": "generalization analysis of transformers in distribution regression",
+    "expected_keywords": [
+      "generalization",
+      "distribution",
+      "regression",
+      "theoretical",
+      "bound"
+    ],
+    "relevant_paper_ids": [
+      "2606.29256v1",
+      "2607.00479v1",
+      "2606.29983v1"
+    ]
+  },
+  {
+    "id": "q11",
+    "query": "information regularized attention for visual centric reasoning",
+    "expected_keywords": [
+      "attention",
+      "regularized",
+      "visual-centric",
+      "reasoning",
+      "vision"
+    ],
+    "relevant_paper_ids": [
+      "2607.00434v1"
+    ]
+  },
+  {
+    "id": "q12",
+    "query": "in-context learning with efficient transformers via domain generalization",
+    "expected_keywords": [
+      "in-context",
+      "efficient",
+      "kernel",
+      "generalization",
+      "domain"
+    ],
+    "relevant_paper_ids": [
+      "2607.00479v1",
+      "2606.31184v1",
+      "2606.29256v1",
+      "2606.29844v1"
+    ]
+  },
+  {
+    "id": "q13",
+    "query": "reducing hallucination using comparative internal representations",
+    "expected_keywords": [
+      "hallucination",
+      "comparative",
+      "representations",
+      "internal",
+      "cortex"
+    ],
+    "relevant_paper_ids": [
+      "2606.31033v1",
+      "2607.00158v1"
+    ]
+  },
+  {
+    "id": "q14",
+    "query": "token co-occurrence graphs for scalable RAG building",
+    "expected_keywords": [
+      "co-occurrence",
+      "graphs",
+      "scalable",
+      "token",
+      "sliding-window"
+    ],
+    "relevant_paper_ids": [
+      "2606.30093v1"
+    ]
+  },
+  {
+    "id": "q15",
+    "query": "estimating model certainty and confidence signals in retrieval",
+    "expected_keywords": [
+      "certainty",
+      "confidence",
+      "signals",
+      "variance",
+      "estimation"
+    ],
+    "relevant_paper_ids": [
+      "2606.29090v1",
+      "2607.00570v1",
+      "2606.29959v1",
+      "2607.00862v1"
+    ]
+  },
+  {
+    "id": "q16",
+    "query": "cluster-based semantic chunking performance on scientific texts",
+    "expected_keywords": [
+      "cluster-based",
+      "semantic",
+      "chunking",
+      "scientific",
+      "preprocessing"
+    ],
+    "relevant_paper_ids": [
+      "2607.01852v1",
+      "2607.02087v1"
+    ]
+  },
+  {
+    "id": "q17",
+    "query": "vision transformers internal representations evolution",
+    "expected_keywords": [
+      "vision",
+      "transformers",
+      "evolution",
+      "geometric",
+      "layers"
+    ],
+    "relevant_paper_ids": [
+      "2607.02386v1",
+      "2607.00774v1"
+    ]
+  },
+  {
+    "id": "q18",
+    "query": "contrastive decoding optimization for autoregressive generation",
+    "expected_keywords": [
+      "contrastive",
+      "decoding",
+      "optimization",
+      "generation",
+      "autoregressive"
+    ],
+    "relevant_paper_ids": [
+      "2607.00570v1",
+      "2607.01893v1",
+      "2607.01775v1",
+      "2606.29223v1"
+    ]
+  },
+  {
+    "id": "q19",
+    "query": "parameter efficient scaling methods for open source architectures",
+    "expected_keywords": [
+      "parameter-efficient",
+      "scaling",
+      "open-source",
+      "architectures",
+      "peft"
+    ],
+    "relevant_paper_ids": [
+      "2607.01789v1"
+    ]
+  },
+  {
+    "id": "q20",
+    "query": "quantization techniques for deploying deep models on edge hardware",
+    "expected_keywords": [
+      "quantization",
+      "deploying",
+      "edge",
+      "hardware",
+      "bits"
+    ],
+    "relevant_paper_ids": [
+      "2606.31456v1",
+      "2607.01127v1",
+      "2607.00908v1",
+      "2607.00170v1"
+    ]
+  },
+  {
+    "id": "q21",
+    "query": "hnsw vector index configuration space similarity metrics",
+    "expected_keywords": [
+      "hnsw",
+      "vector",
+      "index",
+      "cosine",
+      "space"
+    ],
+    "relevant_paper_ids": [
+      "2607.02338v1"
+    ]
+  },
+  {
+    "id": "q22",
+    "query": "evaluating multi-camera dynamic facial recognition architectures",
+    "expected_keywords": [
+      "multi-camera",
+      "dynamic",
+      "facial",
+      "recognition",
+      "yolov8"
+    ],
+    "relevant_paper_ids": [
+      "2606.29335v1"
+    ]
+  },
+  {
+    "id": "q23",
+    "query": "cross-encoder self-attention vs bi-encoder distance calculation",
+    "expected_keywords": [
+      "cross-encoder",
+      "bi-encoder",
+      "self-attention",
+      "distance",
+      "logits"
+    ],
+    "relevant_paper_ids": [
+      "2607.02344v1"
+    ]
+  },
+  {
+    "id": "q24",
+    "query": "sparse text indexing techniques using Okapi BM25 ranking",
+    "expected_keywords": [
+      "sparse",
+      "indexing",
+      "okapi",
+      "bm25",
+      "ranking"
+    ],
+    "relevant_paper_ids": [
+      "2606.29947v1"
+    ]
+  },
+  {
+    "id": "q25",
+    "query": "reducing context rot in multi-page document parsing pipelines",
+    "expected_keywords": [
+      "context",
+      "rot",
+      "multi-page",
+      "parsing",
+      "hierarchical"
+    ],
+    "relevant_paper_ids": [
+      "2606.29718v1"
+    ]
+  }
+]

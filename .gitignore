@@ -231,7 +231,7 @@ __marimo__/
 /data/vector_store/
 
 # Ensure evaluation benchmarks and processed parquets are tracked
-/data/evaluation/
+!/data/evaluation/
 !/data/processed/
 
 
