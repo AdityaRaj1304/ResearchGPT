@@ -28,9 +28,9 @@ def build_vector_database(
     print("Constructing structured context text column (Title + Abstract)...")
     df["text"] = "Title: " + df["title"] + " | Abstract: " + df["abstract"]
     
-    # 2. Initialize the PyTorch embedding engine (all-MiniLM-L6-v2)
-    print("Initializing PyTorch embedding engine (all-MiniLM-L6-v2)...")
-    onnx_ef = embedding_functions.SentenceTransformerEmbeddingFunction(model_name="all-MiniLM-L6-v2")
+    # 2. Initialize the PyTorch embedding engine (BAAI/bge-small-en-v1.5)
+    print("Initializing PyTorch embedding engine (BAAI/bge-small-en-v1.5)...")
+    onnx_ef = embedding_functions.SentenceTransformerEmbeddingFunction(model_name="BAAI/bge-small-en-v1.5")
     
     # 3. Initialize ChromaDB persistent storage layer
     print(f"Setting up persistent ChromaDB at: {db_path}...")

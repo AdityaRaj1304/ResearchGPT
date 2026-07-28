@@ -1,0 +1,109 @@
+import msvc_runtime
+import nltk
+from transformers import AutoTokenizer
+from sentence_transformers import SentenceTransformer
+import numpy as np
+import re
+
+class WholeDocChunker:
+    def chunk(self, text):
+        return [text]
+
+class FixedSizeChunker:
+    def __init__(self, model_name="BAAI/bge-small-en-v1.5", max_tokens=512):
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        self.max_tokens = max_tokens
+
+    def chunk(self, text):
+        tokens = self.tokenizer.encode(text, add_special_tokens=False)
+        chunks = []
+        for i in range(0, len(tokens), self.max_tokens):
+            chunk_tokens = tokens[i:i + self.max_tokens]
+            chunks.append(self.tokenizer.decode(chunk_tokens))
+        return chunks
+
+class OverlapChunker:
+    def __init__(self, model_name="BAAI/bge-small-en-v1.5", max_tokens=512, overlap=128):
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        self.max_tokens = max_tokens
+        self.overlap = overlap
+        self.step = max_tokens - overlap
+
+    def chunk(self, text):
+        tokens = self.tokenizer.encode(text, add_special_tokens=False)
+        chunks = []
+        
+        if len(tokens) <= self.max_tokens:
+            return [self.tokenizer.decode(tokens)]
+            
+        # Standard sliding window chunking
+        i = 0
+        while i < len(tokens):
+            chunk_tokens = tokens[i:i + self.max_tokens]
+            chunks.append(self.tokenizer.decode(chunk_tokens))
+            if i + self.max_tokens >= len(tokens):
+                break
+            i += self.step
+        return chunks
+
+class SemanticChunker:
+    def __init__(self, model_name="BAAI/bge-small-en-v1.5", max_tokens=512):
+        try:
+            nltk.data.find('tokenizers/punkt_tab/english')
+        except LookupError:
+            nltk.download('punkt')
+            nltk.download('punkt_tab')
+            
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        self.encoder = SentenceTransformer(model_name)
+        self.max_tokens = max_tokens
+        
+        # Matches formats like "1. Introduction", "I. INTRODUCTION", "Introduction"
+        self.header_regex = re.compile(r'^\s*(\d+\.?|[IVXLCDM]+\.?)?\s*(Abstract|Introduction|Methodology|Experiments|Results|Conclusion|Discussion|Related Work)\b', re.IGNORECASE)
+
+    def chunk(self, text):
+        sentences = nltk.sent_tokenize(text)
+        if not sentences:
+            return []
+            
+        embeddings = self.encoder.encode(sentences)
+        
+        norms = np.linalg.norm(embeddings, axis=1, keepdims=True)
+        norms[norms == 0] = 1e-10
+        norm_embeddings = embeddings / norms
+        
+        similarities = []
+        for i in range(len(sentences) - 1):
+            sim = np.dot(norm_embeddings[i], norm_embeddings[i+1])
+            similarities.append(sim)
+            
+        if similarities:
+            threshold = np.percentile(similarities, 20)
+        else:
+            threshold = 0
+            
+        chunks = []
+        current_chunk_sentences = [sentences[0]]
+        current_chunk_tokens = len(self.tokenizer.encode(sentences[0], add_special_tokens=False))
+        
+        for i in range(1, len(sentences)):
+            sentence = sentences[i]
+            sentence_tokens = len(self.tokenizer.encode(sentence, add_special_tokens=False))
+            
+            is_header = bool(self.header_regex.match(sentence))
+            sim_drop = similarities[i-1] < threshold if i-1 < len(similarities) else False
+            exceeds_cap = (current_chunk_tokens + sentence_tokens) > self.max_tokens
+            
+            # If current sentence exceeds max_tokens on its own, we still must start a new chunk
+            if is_header or sim_drop or exceeds_cap:
+                chunks.append(" ".join(current_chunk_sentences))
+                current_chunk_sentences = [sentence]
+                current_chunk_tokens = sentence_tokens
+            else:
+                current_chunk_sentences.append(sentence)
+                current_chunk_tokens += sentence_tokens
+                
+        if current_chunk_sentences:
+            chunks.append(" ".join(current_chunk_sentences))
+            
+        return chunks

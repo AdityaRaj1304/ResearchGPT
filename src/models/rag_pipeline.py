@@ -21,7 +21,7 @@ class ResearchGPTRetriever:
         self.client = chromadb.PersistentClient(path=db_path)
         
         # Must match the exact embedding model used during indexing
-        self.ef = embedding_functions.SentenceTransformerEmbeddingFunction(model_name="all-MiniLM-L6-v2")
+        self.ef = embedding_functions.SentenceTransformerEmbeddingFunction(model_name="BAAI/bge-small-en-v1.5")
         
         self.collection = self.client.get_collection(
             name=collection_name,

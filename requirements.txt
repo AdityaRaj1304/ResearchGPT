@@ -8,3 +8,5 @@ sentence-transformers
 chromadb
 torch
 PyMuPDF
+nltk
+transformers
