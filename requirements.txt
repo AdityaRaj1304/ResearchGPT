@@ -10,3 +10,5 @@ torch
 PyMuPDF
 nltk
 transformers
+matplotlib
+seaborn

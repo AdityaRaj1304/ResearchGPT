@@ -66,15 +66,11 @@ class SemanticChunker:
         if not sentences:
             return []
             
-        embeddings = self.encoder.encode(sentences)
-        
-        norms = np.linalg.norm(embeddings, axis=1, keepdims=True)
-        norms[norms == 0] = 1e-10
-        norm_embeddings = embeddings / norms
+        embeddings = self.encoder.encode(sentences, batch_size=128, show_progress_bar=False, normalize_embeddings=True)
         
         similarities = []
         for i in range(len(sentences) - 1):
-            sim = np.dot(norm_embeddings[i], norm_embeddings[i+1])
+            sim = np.dot(embeddings[i], embeddings[i+1])
             similarities.append(sim)
             
         if similarities:
@@ -92,10 +88,10 @@ class SemanticChunker:
             
             is_header = bool(self.header_regex.match(sentence))
             sim_drop = similarities[i-1] < threshold if i-1 < len(similarities) else False
-            exceeds_cap = (current_chunk_tokens + sentence_tokens) > self.max_tokens
+            exceeds_cap = (current_chunk_tokens + sentence_tokens) > 500
             
-            # If current sentence exceeds max_tokens on its own, we still must start a new chunk
-            if is_header or sim_drop or exceeds_cap:
+            # Bounded Safety Window
+            if exceeds_cap or is_header or (sim_drop and current_chunk_tokens >= 150):
                 chunks.append(" ".join(current_chunk_sentences))
                 current_chunk_sentences = [sentence]
                 current_chunk_tokens = sentence_tokens
@@ -106,4 +102,61 @@ class SemanticChunker:
         if current_chunk_sentences:
             chunks.append(" ".join(current_chunk_sentences))
             
-        return chunks
+        # Post-Processing Micro-Chunk Merger
+        final_chunks = []
+        i = 0
+        while i < len(chunks):
+            chunk = chunks[i]
+            tokens = len(self.tokenizer.encode(chunk, add_special_tokens=False))
+            
+            if tokens < 100:
+                if i < len(chunks) - 1:
+                    next_tokens = len(self.tokenizer.encode(chunks[i+1], add_special_tokens=False))
+                    if tokens + next_tokens <= 512:
+                        chunks[i+1] = chunk + " " + chunks[i+1]
+                    elif final_chunks and len(self.tokenizer.encode(final_chunks[-1], add_special_tokens=False)) + tokens <= 512:
+                        final_chunks[-1] += " " + chunk
+                    else:
+                        chunks[i+1] = chunk + " " + chunks[i+1]
+                else:
+                    if final_chunks and len(self.tokenizer.encode(final_chunks[-1], add_special_tokens=False)) + tokens <= 512:
+                        final_chunks[-1] += " " + chunk
+                    else:
+                        final_chunks[-1] += " " + chunk
+            else:
+                final_chunks.append(chunk)
+            i += 1
+            
+        # Fix any > 512 chunks by splitting them
+        enforced = []
+        for c in final_chunks:
+            toks = self.tokenizer.encode(c, add_special_tokens=False)
+            if len(toks) > 512:
+                sub_sentences = nltk.sent_tokenize(c)
+                cur = []
+                cur_len = 0
+                for s in sub_sentences:
+                    s_len = len(self.tokenizer.encode(s, add_special_tokens=False))
+                    if cur_len + s_len > 512 and cur:
+                        enforced.append(" ".join(cur))
+                        cur = [s]
+                        cur_len = s_len
+                    else:
+                        cur.append(s)
+                        cur_len += s_len
+                if cur:
+                    enforced.append(" ".join(cur))
+            else:
+                enforced.append(c)
+                
+        really_final = []
+        for c in enforced:
+            if len(self.tokenizer.encode(c, add_special_tokens=False)) < 100 and really_final:
+                if len(self.tokenizer.encode(really_final[-1], add_special_tokens=False)) + len(self.tokenizer.encode(c, add_special_tokens=False)) <= 512:
+                    really_final[-1] += " " + c
+                else:
+                    really_final.append(c)
+            else:
+                really_final.append(c)
+                
+        return really_final

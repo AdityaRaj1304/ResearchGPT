@@ -58,14 +58,20 @@ def profile_chunkers(input_parquet="data/processed/sanitized_texts.parquet"):
         print(f"Saved to {output_path}")
         
         # Calculate stats
+        pd.set_option('display.max_columns', None)
         stats_list.append({
             "Strategy": name,
             "Total Chunks": len(chunk_lengths),
             "Avg Chunks/Paper": np.mean(chunks_per_paper),
             "Avg Token Length": np.mean(chunk_lengths),
+            "Median Token Length": np.median(chunk_lengths),
+            "25th Percentile": np.percentile(chunk_lengths, 25),
+            "75th Percentile": np.percentile(chunk_lengths, 75),
             "Max Token Length": np.max(chunk_lengths),
             "Min Token Length": np.min(chunk_lengths),
             "Std Token Length": np.std(chunk_lengths),
+            "Outlier Low (<100)": sum(1 for l in chunk_lengths if l < 100),
+            "Outlier High (>512)": sum(1 for l in chunk_lengths if l > 512),
             "Time (s)": round(time.time() - start_time, 2)
         })
         
@@ -74,7 +80,7 @@ def profile_chunkers(input_parquet="data/processed/sanitized_texts.parquet"):
     stats_df.to_csv(stats_csv_path, index=False)
     
     print("\nChunking Profiling Complete. Stats:")
-    print(stats_df)
+    print(stats_df.to_markdown(index=False))
 
 if __name__ == "__main__":
     profile_chunkers()
