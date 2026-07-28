@@ -1,60 +1,206 @@
-# ResearchGPT Project Roadmap
+# **Antigravity Task Specification: ResearchGPT Granular Ablation Study** 
 
-ResearchGPT is an end-to-end Semantic Search and Retrieval-Augmented Generation (RAG) system designed to index, vectorize, and search academic literature from arXiv. The system allows users to execute natural language queries against an optimized vector corpus of cutting-edge AI research papers.
+**AGENT INSTRUCTION NOTICE:** This document is an architectural specification and implementation roadmap. Your current task is strictly **READ-ONLY** . Do NOT generate code, modify existing files, or execute terminal commands. Review this specification, analyze the current project structure against these requirements, and await explicit user authorization before initiating Phase 1. 
 
----
+## **1. Project Objective & Core Research Questions** 
 
-## Technical Stack Architecture
+The objective of this project is to execute a rigorous experimental study evaluating how document segmentation strategies, retrieval architectures, and context sizes ( _Top_ - _K_ ) impact retrieval quality, latency, generation faithfulness, and citation integrity in academic RAG systems processing full-length research PDFs. 
 
-* **Operating System:** Linux via Ubuntu WSL 2
-* **Data Processing:** Python 3.12, Pandas, PyArrow (Parquet storage)
-* **Ingestion Layer:** arXiv API, lxml parser, tqdm tracking
-* **Embedding Layer:** HuggingFace Sentence-Transformers (Local compute)
-* **Vector Storage:** Milvus, Qdrant, or ChromaDB
-* **Backend Pipeline:** Node.js, Express.js (MERN pattern synchronization)
-* **Frontend Interface:** React.js
+#### **Primary Research Questions:** 
 
----
+- **RQ1:** How significantly do chunking strategies (Whole-Document baseline vs. Fixed vs. Overlap vs. Formal Semantic) improve retrieval quality (Precision@K, Recall@K, MRR, nDCG) compared to un-chunked full-paper representations? 
 
-## Project Milestones
+- **RQ2:** What is the marginal retrieval benefit of applying a neural Cross-Encoder reranker across distinct chunk distributions and context cutoff sizes ( _K_ =3 vs. _K_ =5)? 
 
-### Milestone 1: Problem & Planning
-* **Objective:** Establish the development environment and define the engineering workflow.
-* **Tasks completed:**
-  * Configure Ubuntu WSL 2 as the native development environment to prevent cross-platform compilation errors.
-  * Initialize a localized Linux virtual environment (`.venv`).
-  * Install the base ingestion dependencies (`arxiv`, `pandas`, `pyarrow`, `tqdm`, `pyyaml`, `lxml`).
-  * Construct a baseline verification pipeline (`test_fetch.py`) to confirm API connectivity and disk-write permissions.
+- **RQ3:** How do different chunking algorithms impact generation quality, specifically citation accuracy and hallucination rate? 
 
-### Milestone 2: Data Preparation & Ingestion
-* **Objective:** Build a scalable, rate-limited ingestion engine to harvest and clean the core academic corpus.
-* **Tasks remaining:**
-  * Execute `bulk_fetch.py` to securely download the initial batch of 1,000 papers spanning `cs.CL` (Computation and Language) and `cs.LG` (Machine Learning) categories.
-  * Implement pagination and graceful error-handling to survive network timeouts without losing data.
-  * Clean raw LaTeX text anomalies, handle missing fields, and compress data into a snappy-compressed `.parquet` file to preserve typed structure.
+- **RQ4:** Are observed performance variations between chunking and retrieval configurations statistically significant ( _p_ <0.05)? 
 
-### Milestone 3: Model Training, Embeddings & Vector Storage
-* **Objective:** Chunk raw text data, generate dense mathematical embeddings, and index them inside a low-latency vector database.
-* **Tasks remaining:**
-  * Define a text chunking strategy (e.g., recursive character text splitting) to handle paper abstracts or full texts without losing contextual overlap.
-  * Select and initialize a local embedding model (e.g., `sentence-transformers/all-MiniLM-L6-v2`) via PyTorch.
-  * Set up a vector database instance (e.g., a local ChromaDB or a Dockerized Qdrant/Milvus container).
-  * Design the vector database schema to map high-dimensional vector embeddings to their respective metadata properties (ID, title, URL, publication date).
-  * Compute cosine similarity matrices during initial query testing to benchmark search accuracy.
+## **2. Architectural Scope & Scaled Dataset Pipeline** 
 
-### Milestone 4: Evaluation & RAG Integration
-* **Objective:** Link the retrieval engine to a Large Language Model (LLM) and establish a validation framework for response accuracy.
-* **Tasks remaining:**
-  * Design a semantic retrieval function that takes a raw user query, embeds it on the fly, and pulls the top $K$ most relevant document chunks.
-  * Build a prompt template that strictly binds the LLM context to the retrieved papers to prevent hallucination.
-  * Connect the context window to a local or API-driven LLM backend.
-  * Establish evaluation metrics (e.g., precision at $K$, retrieval latency, and context relevance checks) to verify that results are factually grounded.
+The codebase will be extended to support a phased dataset scaling model: 
 
-### Milestone 5: Deployment & Results
-* **Objective:** Connect the Python-driven data pipeline to a MERN full-stack application and deploy the user interface.
-* **Tasks remaining:**
-  * Spin up an Express.js/Node.js server to act as the primary API orchestration layer.
-  * Connect the backend server to log query metadata, user activity, or system logs.
-  * Build a clean, minimalist React.js frontend interface featuring a search query bar, a real-time progress layout, and interactive search result cards.
-  * Integrate direct PDF hyperlinks (`pdf_url`) to allow users to verify raw source documentation instantly.
-  * Document the final API endpoints, execution instructions, and system performance metrics inside the master README file.
+- **Phase A (Validation Set):** 20 full-text PDFs (for rapid code verification and integration testing). 
+
+- **Phase B (Experimental Scale):** 200 full-text PDFs (for main ablation runs and hyperparameter validation). 
+
+- **Phase C (Final Benchmark Scale):** 1,000 full-text PDFs (for final statistical significance reporting and paper figures). 
+
+## **3. Core Component Specifications** 
+
+### **A. Full-PDF Extraction & Layout Sanitization** 
+
+- **Extraction Engine:** Use PyMuPDF (fitz) or pdfplumber to process multi-column academic paper structures. 
+
+- **Sanitization Requirements:** 
+
+   - Strip headers, footers, page numbering, and margin artifacts. 
+
+   - Detect and isolate or strip raw bibliography/reference lists to eliminate keyword retrieval noise. 
+
+   - Standardize reading order across two-column layouts. 
+
+### **B. Segmenter Engine (4 Strategies)** 
+
+1. **Whole-Document Baseline (No Chunking):** Single embedding per entire paper (collapsing full sanitized text into one representation). 
+
+2. **Fixed-Size Chunking:** Hard boundaries at **512 tokens** (using all-MiniLM-L6-v2 tokenizer) with **0 token overlap** . 
+
+3. **Overlapping Chunking: 512-token chunks** with a **128-token sliding window overlap** (384-token step size). 
+
+4. **Formal Semantic Chunking Engine:** 
+
+   - Step 1: Detect explicit section headers ( _Abstract_ , _Introduction_ , _Methodology_ , _Experiments_ , _Results_ , _Conclusion_ ). 
+
+   - Step 2: Perform sentence segmentation using PyTorch/Spacy/NLTK. 
+
+   - Step 3: Compute adjacent sentence vector embeddings using all-MiniLM-L6v2. 
+
+   - Step 4: Calculate rolling cosine similarity across adjacent sentence vectors. 
+
+   - Step 5: Place chunk boundaries at local similarity drops below a dynamic percentile threshold (or hard minimum similarity score). 
+
+### **C. Chunk Profiler Engine** 
+
+For each chunking strategy across the ingestion pipeline, calculate and export structural metadata: 
+
+- Average chunk token length 
+
+- Maximum and minimum chunk token length 
+
+- Standard deviation of chunk lengths 
+
+- Total chunk count per paper 
+
+- Distribution histogram data 
+
+### **D. Parameterized Storage Layer (4 ChromaDB Collections)** 
+
+The indexing engine must write to four dedicated collections within data/vector_store: 
+
+1. arxiv_full_doc_baseline 
+
+2. arxiv_full_fixed_512 
+
+3. arxiv_full_overlap_512_128 
+
+4. arxiv_full_semantic_formal 
+
+Each chunk record must retain: paper_id, paper_title, chunk_index, chunk_strategy, token_count, and section_name. 
+
+## **4. The 24-Pipeline Experimental Matrix (**<sup>4</sup><sup>_×_3</sup><sup>_×_2</sup> **)** 
+
+The system will systematically benchmark 24 pipeline configurations across **4 Chunking Methods** _×_ **3 Retrieval Architectures** _×_ **2 Context Cutoff Sizes (** _Top_ - _K_ **)** : 
+
+- **Chunking Methods:** Whole-Doc, Fixed, Overlap, Semantic 
+
+- **Retrievers:** Dense Only, Hybrid (Dense + BM25), Hybrid + Reranker (ms-marco-MiniLM-L-6v2) 
+
+- **Context Cutoffs:** Top-K = 3, Top-K = 5 
+
+|**Config**<br>**ID**|**Chunking**<br>**Strategy**|**Retrieval**<br>**Strategy**|**Reranker**|**Context Cutoff**<br>**(Top-K)**|
+|---|---|---|---|---|
+|**C01 -**<br>**C02**|Whole<br>Document|Dense|No|_K_=3_, K_=5|
+|**C03 -**<br>**C04**|Whole<br>Document|Hybrid|No|_K_=3_, K_=5|
+|**C05 -**<br>**C06**|Whole<br>Document|Hybrid|Yes|_K_=3_, K_=5|
+|**C07 -**<br>**C08**|Fixed-Size|Dense|No|_K_=3_, K_=5|
+|**C09 -**<br>**C10**|Fixed-Size|Hybrid|No|_K_=3_, K_=5|
+|**C11 -**<br>**C12**|Fixed-Size|Hybrid|Yes|_K_=3_, K_=5|
+|**C13 -**<br>**C14**|Overlapping|Dense|No|_K_=3_, K_=5|
+|**C15 -**<br>**C16**|Overlapping|Hybrid|No|_K_=3_, K_=5|
+|**C17 -**<br>**C18**|Overlapping|Hybrid|Yes|_K_=3_, K_=5|
+|**C19 -**<br>**C20**|Formal Semantic|Dense|No|_K_=3_, K_=5|
+
+
+
+|**Config**<br>**ID**|**Chunking**<br>**Strategy**|**Retrieval**<br>**Strategy**|**Reranker**|**Context Cutoff**<br>**(Top-K)**|
+|---|---|---|---|---|
+|**C21 -**<br>**C22**|Formal Semantic|Hybrid|No|_K_=3_, K_=5|
+|**C23 -**<br>**C24**|Formal Semantic|Hybrid|Yes|_K_=3_, K_=5|
+
+
+
+## **5. Comprehensive Evaluation Framework** 
+
+### **A. Retrieval Performance Metrics** 
+
+- **Precision@K (** _K ∈_ {3,5 } **)** 
+
+- **Recall@K (** _K ∈_ {3,5,10 } **)** 
+
+- **Mean Reciprocal Rank (MRR)** 
+
+- **Normalized Discounted Cumulative Gain (nDCG@K)** 
+
+### **B. Granular System Efficiency & Resource Profiling** 
+
+Track and log performance bottlenecks separately: 
+
+- **Index Disk Footprint** (MB per collection) 
+
+- **Embedding Ingestion Time** (seconds per 100 papers) 
+
+- **Search Latency** (milliseconds) 
+
+- **Rerank Latency** (milliseconds) 
+
+- **LLM Generation Latency** (milliseconds) 
+
+- **End-to-End Latency** (milliseconds) 
+
+### **C. Generation & Quality Metrics** 
+
+- **Citation Accuracy Score:** Percentage of claims in the generated response that are directly entailed by the retrieved chunk text cited. 
+
+- **Hallucination Rate:** Percentage of generated claims that lack ground-truth context in the retrieved chunks. 
+
+### **D. Statistical Hypothesis Testing** 
+
+Automate pairwise statistical significance analysis across configurations: 
+
+- **Paired t-test** (for normally distributed metric comparisons) 
+
+- **Wilcoxon Signed-Rank Test** (non-parametric comparison) 
+
+- Report _p_ -values and confidence intervals to verify whether performance delta between Whole Doc vs Semantic and Hybrid vs Hybrid+Reranker is statistically significant ( _p_ <0.05). 
+
+## **6. Multi-Phase Execution Roadmap** 
+
+### **Phase 1: Full PDF Extraction & Sanitization** 
+
+- Upgrade dataset ingest pipeline to fetch full PDF binaries. 
+
+- Implement layout parsing and noise removal scripts. 
+
+- Validate text extraction accuracy on 20-paper dataset before expanding to 200 and 1,000 papers. 
+
+### **Phase 2: Chunking Engines & Profiling Suite** 
+
+- Implement Whole Doc, Fixed, Overlap, and Formal Semantic chunking logic in src/ingestion/chunkers.py. 
+
+- Build chunk distribution statistical profiler (averages, counts, token length variance). 
+
+### **Phase 3: Dynamic Multi-Index Storage** 
+
+- Parameterize vector storage scripts to construct and populate four isolated ChromaDB collections. 
+
+- Log index construction timing and storage size footprints across strategies. 
+
+### **Phase 4: Parameterized Retrieval Engine** 
+
+- Refactor advanced_retriever.py to support dynamic collection switching, BM25 indexing per chunking strategy, and variable _Top_ - _K_ parameters. 
+
+### **Phase 5: Automated Benchmarking & Generation Evaluator** 
+
+- Upgrade evaluate_retrieval.py to execute all 24 experimental runs against benchmark_queries.json. 
+
+- Integrate timer instrumentation for search, rerank, and generation steps. 
+
+- Integrate LLM-as-a-judge verification loop for Citation Accuracy and Hallucination Rate scoring. 
+
+### **Phase 6: Statistical Analysis & Paper Output Generation** 
+
+- Implement src/evaluation/statistical_tests.py for automated paired t-tests and Wilcoxon tests. 
+
+- Export structured comparison tables (CSV, JSON) and generate publicationready performance graphs. 
+

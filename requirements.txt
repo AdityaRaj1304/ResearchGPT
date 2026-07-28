@@ -7,3 +7,4 @@ lxml
 sentence-transformers
 chromadb
 torch
+PyMuPDF

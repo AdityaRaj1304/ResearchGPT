@@ -126,7 +126,7 @@ def run_interactive_test():
     generator = ResearchGPTGenerator()
     
     print("="*65)
-    print(" 🔎 ResearchGPT: Phase 1 Baseline Retrieval Pipeline Active")
+    print(" ResearchGPT: Phase 1 Baseline Retrieval Pipeline Active")
     print(" Type your research question below (or 'exit' to quit)")
     print("="*65)
     
@@ -146,7 +146,7 @@ def run_interactive_test():
             prompt_payload = generator.generate_prompt(user_query=query, retrieved_docs=docs)
             
             # 3. Print Retrieval Metrics & Results
-            print(f"\n--- 📊 RETRIEVAL RESULTS (Found {len(docs)} matching papers) ---")
+            print(f"\n--- RETRIEVAL RESULTS (Found {len(docs)} matching papers) ---")
             if not docs:
                 print("No papers crossed the similarity threshold. Try broadening your terms.")
             else:
@@ -155,7 +155,7 @@ def run_interactive_test():
                     print(f"   Categories: {doc['categories']} | URL: {doc['pdf_url']}")
                 
             # 4. Preview the Context Window
-            print("\n--- 📝 ASSEMBLED LLM CONTEXT WINDOW PREVIEW ---")
+            print("\n--- ASSEMBLED LLM CONTEXT WINDOW PREVIEW ---")
             preview_text = prompt_payload["user"][:600] + "\n... [Context truncated for terminal preview] ..." if len(prompt_payload["user"]) > 600 else prompt_payload["user"]
             print(preview_text)
             print("="*65)
