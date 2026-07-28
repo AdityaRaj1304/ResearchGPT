@@ -19,7 +19,11 @@ class FixedSizeChunker:
         chunks = []
         for i in range(0, len(tokens), self.max_tokens):
             chunk_tokens = tokens[i:i + self.max_tokens]
-            chunks.append(self.tokenizer.decode(chunk_tokens))
+            chunk_text = self.tokenizer.decode(chunk_tokens)
+            while len(self.tokenizer.encode(chunk_text, add_special_tokens=False)) > self.max_tokens:
+                chunk_tokens = chunk_tokens[:-1]
+                chunk_text = self.tokenizer.decode(chunk_tokens)
+            chunks.append(chunk_text)
         return chunks
 
 class OverlapChunker:
@@ -40,7 +44,11 @@ class OverlapChunker:
         i = 0
         while i < len(tokens):
             chunk_tokens = tokens[i:i + self.max_tokens]
-            chunks.append(self.tokenizer.decode(chunk_tokens))
+            chunk_text = self.tokenizer.decode(chunk_tokens)
+            while len(self.tokenizer.encode(chunk_text, add_special_tokens=False)) > self.max_tokens:
+                chunk_tokens = chunk_tokens[:-1]
+                chunk_text = self.tokenizer.decode(chunk_tokens)
+            chunks.append(chunk_text)
             if i + self.max_tokens >= len(tokens):
                 break
             i += self.step
@@ -65,6 +73,19 @@ class SemanticChunker:
         sentences = nltk.sent_tokenize(text)
         if not sentences:
             return []
+            
+        # Fix 2: Pre-process monster sentences
+        processed_sentences = []
+        for sent in sentences:
+            sent_tokens = self.tokenizer.encode(sent, add_special_tokens=False)
+            if len(sent_tokens) > 500:
+                for i in range(0, len(sent_tokens), 500):
+                    slice_ids = sent_tokens[i:i+500]
+                    sub_sent = self.tokenizer.decode(slice_ids)
+                    processed_sentences.append(sub_sent)
+            else:
+                processed_sentences.append(sent)
+        sentences = processed_sentences
             
         embeddings = self.encoder.encode(sentences, batch_size=128, show_progress_bar=False, normalize_embeddings=True)
         
@@ -102,61 +123,67 @@ class SemanticChunker:
         if current_chunk_sentences:
             chunks.append(" ".join(current_chunk_sentences))
             
-        # Post-Processing Micro-Chunk Merger
-        final_chunks = []
-        i = 0
-        while i < len(chunks):
-            chunk = chunks[i]
-            tokens = len(self.tokenizer.encode(chunk, add_special_tokens=False))
-            
-            if tokens < 100:
-                if i < len(chunks) - 1:
-                    next_tokens = len(self.tokenizer.encode(chunks[i+1], add_special_tokens=False))
-                    if tokens + next_tokens <= 512:
-                        chunks[i+1] = chunk + " " + chunks[i+1]
-                    elif final_chunks and len(self.tokenizer.encode(final_chunks[-1], add_special_tokens=False)) + tokens <= 512:
-                        final_chunks[-1] += " " + chunk
+        # Fix 3: Aggressive Micro-Chunk Merging
+        final_chunks = chunks.copy()
+        
+        while True:
+            merged_in_this_pass = False
+            if len(final_chunks) <= 1:
+                break
+                
+            for i in range(len(final_chunks)):
+                toks = self.tokenizer.encode(final_chunks[i], add_special_tokens=False)
+                if len(toks) < 100:
+                    left_len = float('inf')
+                    right_len = float('inf')
+                    
+                    if i > 0:
+                        left_len = len(self.tokenizer.encode(final_chunks[i-1], add_special_tokens=False))
+                    if i < len(final_chunks) - 1:
+                        right_len = len(self.tokenizer.encode(final_chunks[i+1], add_special_tokens=False))
+                        
+                    if left_len == float('inf') and right_len == float('inf'):
+                        break
+                        
+                    if left_len <= right_len:
+                        if left_len + len(toks) <= 512:
+                            final_chunks[i-1] = final_chunks[i-1] + " " + final_chunks[i]
+                            final_chunks.pop(i)
+                            merged_in_this_pass = True
+                            break
+                        elif right_len != float('inf') and right_len + len(toks) <= 512:
+                            final_chunks[i] = final_chunks[i] + " " + final_chunks[i+1]
+                            final_chunks.pop(i+1)
+                            merged_in_this_pass = True
+                            break
                     else:
-                        chunks[i+1] = chunk + " " + chunks[i+1]
-                else:
-                    if final_chunks and len(self.tokenizer.encode(final_chunks[-1], add_special_tokens=False)) + tokens <= 512:
-                        final_chunks[-1] += " " + chunk
-                    else:
-                        final_chunks[-1] += " " + chunk
-            else:
-                final_chunks.append(chunk)
-            i += 1
-            
-        # Fix any > 512 chunks by splitting them
-        enforced = []
+                        if right_len + len(toks) <= 512:
+                            final_chunks[i] = final_chunks[i] + " " + final_chunks[i+1]
+                            final_chunks.pop(i+1)
+                            merged_in_this_pass = True
+                            break
+                        elif left_len != float('inf') and left_len + len(toks) <= 512:
+                            final_chunks[i-1] = final_chunks[i-1] + " " + final_chunks[i]
+                            final_chunks.pop(i)
+                            merged_in_this_pass = True
+                            break
+                            
+            if not merged_in_this_pass:
+                break
+                
+        # Final pass to strictly enforce <= 512 for Semantic Chunker
+        strictly_final = []
         for c in final_chunks:
             toks = self.tokenizer.encode(c, add_special_tokens=False)
             if len(toks) > 512:
-                sub_sentences = nltk.sent_tokenize(c)
-                cur = []
-                cur_len = 0
-                for s in sub_sentences:
-                    s_len = len(self.tokenizer.encode(s, add_special_tokens=False))
-                    if cur_len + s_len > 512 and cur:
-                        enforced.append(" ".join(cur))
-                        cur = [s]
-                        cur_len = s_len
-                    else:
-                        cur.append(s)
-                        cur_len += s_len
-                if cur:
-                    enforced.append(" ".join(cur))
+                for idx in range(0, len(toks), 512):
+                    slice_ids = toks[idx:idx+512]
+                    chunk_text = self.tokenizer.decode(slice_ids)
+                    while len(self.tokenizer.encode(chunk_text, add_special_tokens=False)) > 512:
+                        slice_ids = slice_ids[:-1]
+                        chunk_text = self.tokenizer.decode(slice_ids)
+                    strictly_final.append(chunk_text)
             else:
-                enforced.append(c)
+                strictly_final.append(c)
                 
-        really_final = []
-        for c in enforced:
-            if len(self.tokenizer.encode(c, add_special_tokens=False)) < 100 and really_final:
-                if len(self.tokenizer.encode(really_final[-1], add_special_tokens=False)) + len(self.tokenizer.encode(c, add_special_tokens=False)) <= 512:
-                    really_final[-1] += " " + c
-                else:
-                    really_final.append(c)
-            else:
-                really_final.append(c)
-                
-        return really_final
+        return strictly_final
