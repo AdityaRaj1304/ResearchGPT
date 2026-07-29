@@ -12,3 +12,5 @@ nltk
 transformers
 matplotlib
 seaborn
+scipy
+openai
