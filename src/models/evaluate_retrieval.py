@@ -37,7 +37,7 @@ class BenchmarkEvaluator:
         self.model_name = "llama-3.3-70b-versatile"
 
     def dcg_at_k(self, r, k):
-        r = np.asfarray(r)[:k]
+        r = np.asarray(r, dtype=float)[:k]
         if r.size:
             return np.sum(r / np.log2(np.arange(2, r.size + 2)))
         return 0.
@@ -50,6 +50,10 @@ class BenchmarkEvaluator:
 
     def generate_answer(self, query: str, docs: list) -> str:
         context_block = "\n---\n".join([f"[Paper {d['metadata'].get('paper_id', 'Unknown')}] {d['document']}" for d in docs])
+        # Truncate context to avoid Groq TPM limits (12k tokens per minute)
+        if len(context_block) > 8000:
+            context_block = context_block[:8000] + "... [TRUNCATED]"
+            
         sys_prompt = "You are a research assistant. Answer the query using ONLY the provided literature. Cite sources using [Paper X]."
         user_prompt = f"QUERY: {query}\n\nCONTEXT:\n{context_block}"
         
@@ -59,10 +63,10 @@ class BenchmarkEvaluator:
                 messages=[{"role": "system", "content": sys_prompt}, {"role": "user", "content": user_prompt}],
                 temperature=0.0
             )
-            time.sleep(1) # rate limit safety
+            time.sleep(5) # Avoid TPM limit
             return resp.choices[0].message.content
         except Exception as e:
-            print(f"Generation error: {e}")
+            print(f"Generation error: {repr(e)}")
             return ""
 
     def evaluate_generation(self, query: str, context: list, answer: str):
@@ -76,6 +80,9 @@ class BenchmarkEvaluator:
 Return ONLY a JSON object: {"citation_support_rate": 0.0 to 100.0, "unsupported_claim_rate": 0.0 to 100.0}"""
 
         context_block = "\n---\n".join([f"[Paper {d['metadata'].get('paper_id', 'Unknown')}] {d['document']}" for d in context])
+        if len(context_block) > 8000:
+            context_block = context_block[:8000] + "... [TRUNCATED]"
+            
         user_prompt = f"QUERY: {query}\n\nCONTEXT: {context_block}\n\nANSWER: {answer}"
         
         try:
@@ -86,10 +93,10 @@ Return ONLY a JSON object: {"citation_support_rate": 0.0 to 100.0, "unsupported_
                 response_format={"type": "json_object"}
             )
             res_json = json.loads(resp.choices[0].message.content)
-            time.sleep(1)
+            time.sleep(5)
             return float(res_json.get("citation_support_rate", 0)), float(res_json.get("unsupported_claim_rate", 0))
         except Exception as e:
-            print(f"Judge error: {e}")
+            print(f"Judge error: {repr(e)}")
             return 0.0, 0.0
 
     def run(self):
