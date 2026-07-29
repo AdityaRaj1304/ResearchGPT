@@ -1,0 +1,5 @@
+Collection,Vectors,Total Storage Footprint (MB),Storage Efficiency (MB per 1k),Total Build Time (s),Avg Embedding Time (ms/vec),Avg Insertion Time (ms/vec)
+arxiv_wholedoc,20,0.39,19.67,9.83,457.0,34.5
+arxiv_fixed_512,688,13.54,19.67,239.33,342.31,5.55
+arxiv_overlap_512_128,905,17.8,19.67,260.65,282.25,5.76
+arxiv_semantic,1122,22.07,19.67,243.64,211.19,5.96
