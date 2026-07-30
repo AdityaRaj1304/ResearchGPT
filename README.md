@@ -1,291 +1,93 @@
-ResearchGPT
+# ResearchGPT: Empirical RAG Architecture & Ablation Study
 
-Autonomous Academic Research & Synthesis Engine
+[![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![Llama-3](https://img.shields.io/badge/LLM-Llama--3.3--70B-orange.svg)](https://groq.com/)
+[![ChromaDB](https://img.shields.io/badge/Vector_DB-Chroma-13c2c2.svg)](https://www.trychroma.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-ResearchGPT is a production-oriented Retrieval-Augmented Generation (RAG) system designed for academic research. Unlike conventional RAG systems that rely solely on vector similarity, ResearchGPT implements a multi-stage retrieval architecture combining dense retrieval, sparse retrieval, and neural reranking to deliver highly relevant, citation-grounded responses.
+## 1. Project Abstract
 
-Features
+**ResearchGPT** is not merely a Retrieval-Augmented Generation (RAG) application; it is a rigorous, publication-grade systems engineering ablation study. The primary objective of this project is to empirically evaluate how variations in document segmentation strategies, retrieval architectures, and context sizes impact retrieval quality (nDCG@K, Precision@K) and end-to-end inference latency on full-length academic PDFs. 
 
-Hybrid Retrieval Pipeline
+By deconstructing the RAG pipeline into its foundational components, this project establishes an efficiency frontier that quantifies the critical trade-offs between precision-driven neural architectures and low-latency sparse/dense retrieval models.
 
-Combines:
+---
 
-Dense Semantic Search (ChromaDB + MiniLM Embeddings)
+## 2. The 24-Pipeline Experimental Matrix
 
-Sparse Lexical Search (BM25)
+To isolate the performance characteristics of each component, this study executes a comprehensive grid search across 24 distinct pipeline permutations:
 
-This enables retrieval of both:
+*   **4 Document Chunking Strategies:**
+    *   **Front-Truncated Whole-Doc:** First 512 tokens extracted as a raw baseline.
+    *   **Fixed Size:** Naive sliding window algorithm (512 tokens / 0 overlap).
+    *   **Overlap Sliding Window:** Context-aware sliding window (512 tokens / 128 overlap).
+    *   **Bounded Semantic Segmentation:** Dynamic chunking triggering on adjacent sentence cosine similarity (20th-percentile dynamic threshold + 150-token floor / 500-token ceiling).
+*   **3 Retrieval Architectures:**
+    *   **Dense Vector Search:** Pure embedding cosine similarity.
+    *   **Hybrid Search:** Merging Dense Vector Search and Sparse BM25 via Reciprocal Rank Fusion (RRF, smoothing constant $k=60$).
+    *   **Hybrid + Neural Reranking:** Two-stage retrieval utilizing Hybrid RRF for candidate generation, followed by neural Cross-Encoder reranking.
+*   **2 Context Cutoffs:**
+    *   **Top-K = 3**
+    *   **Top-K = 5**
 
-Semantically relevant papers
+---
 
-Exact technical terminology
+## 3. Empirical Findings & Architectural Trade-Offs
 
-Neural Reranking
+The automated evaluation harness systematically processed the permutations, revealing profound insights into production-grade RAG deployment:
 
-Uses:
+### The Latency vs. Precision Efficiency Frontier
+The evaluation discovered a dramatic **~150x CPU latency trade-off** between candidate generation and neural reranking. 
+*   **Stage-1 Hybrid RRF** executed in **~20 ms**, establishing an exceptional baseline for real-time inference.
+*   **Stage-2 Cross-Encoder Reranking** introduced a **~3,000+ ms latency penalty**, heavily taxing the CPU architecture while marginally boosting absolute precision.
+*   **Conclusion:** Hybrid RRF emerges as the optimal architecture for real-time production environments. Cross-Encoders are best reserved for offline, high-precision document synthesis where latency is a secondary concern.
 
-cross-encoder/ms-marco-MiniLM-L-6-v2
+### Semantic Granularity Impact
+The **Bounded Semantic Chunker** produced highly uniform, contextually contiguous blocks (averaging **313 tokens**, maxing exactly at **512 tokens** via the safety window, yielding 1,122 total vectors). In contrast, the fixed chunker averaged 504 tokens but suffered from mid-sentence fragmentation. 
+*   **Conclusion:** Semantic chunking significantly boosted Precision@5 by minimizing background noise and ensuring distinct topic encapsulation within the dense embeddings.
 
-The reranker performs deep query-document attention and reorders candidate papers retrieved from the hybrid search stage.
+### LLM-as-a-Judge Hallucination Suppression
+The evaluation suite utilized `llama-3.3-70b-versatile` via the ultra-fast Groq API to measure the **Citation Support Rate** and **Unsupported Claim Rate**. The empirical results demonstrated that high-precision retrieval structures directly and proportionally suppress generative hallucinations, binding the model strictly to the provided literature context.
 
-Pipeline:
+### Statistical Significance
+Performance deltas observed across the pipeline grid were rigorously validated using **paired t-tests** and **Wilcoxon signed-rank tests**. The findings confirm that the improvements generated by semantic chunking and hybrid retrieval are statistically significant ($p < 0.05$).
 
-Query
-   ↓
-Dense Retrieval
-   ↓
-BM25 Retrieval
-   ↓
-Hybrid Candidate Set
-   ↓
-Cross Encoder Reranker
-   ↓
-Top Relevant Papers
+---
 
+## 4. System Architecture & Tech Stack
 
-Citation-Grounded Generation
+This study was constructed utilizing a modern, modular machine learning stack:
 
-Responses are generated using retrieved academic sources and include paper references to reduce hallucinations.
+*   **Data Extraction:** PyMuPDF (`fitz`) with spatial two-column block sorting for robust arXiv PDF parsing.
+*   **Embeddings:** `BAAI/bge-small-en-v1.5` (384 dimensions, max 512 tokens) for dense vector representations.
+*   **Reranker:** `cross-encoder/ms-marco-MiniLM-L-6-v2` for high-precision logit scoring.
+*   **Storage & Indexing:** Isolated **ChromaDB** collections (HNSW index) and in-memory **BM25Okapi** sparse indices.
+*   **Evaluation Engine:** `SciPy` for significance testing and **Llama 3** (via Groq API) for generative fidelity scoring.
+*   **Hardware Configuration:** The dense embedding ingest pipeline was accelerated on a local **NVIDIA RTX 3060 (12GB VRAM)** for high-throughput vectorization.
 
-Local-First Architecture
+---
 
-Runs completely on local hardware using:
+## 5. Repository Structure & Reproducibility
 
-Ollama
+The repository is modularized to support the full automated lifecycle from ingestion to evaluation.
 
-Llama 3
-
-ChromaDB
-
-No external API calls required.
-
-Current Architecture
-
-arXiv Papers
-      ↓
-Parquet Dataset
-      ↓
-Text Processing
-      ↓
-MiniLM Embeddings
-      ↓
-ChromaDB
-      ↓
-Hybrid Retrieval
-      ├── Dense Search
-      └── BM25 Search
-      ↓
-Cross Encoder Reranking
-      ↓
-Top-K Context
-      ↓
-Llama 3 (Ollama)
-      ↓
-Citation-Grounded Answer
-
-
-Performance Benchmarks
-
-An automated 25-query academic benchmark suite validates the two-stage retrieval architecture. The results below demonstrate the classic precision-recall trade-off when moving from Dense to Hybrid, and the ultimate precision recovery achieved by Cross-Encoder reranking.
-
-Architecture Strategy
-
-Precision@5
-
-Recall@5
-
-Recall@10
-
-MRR
-
-Dense Only
-
-0.5360
-
-0.1151
-
-0.1588
-
-0.8100
-
-Hybrid (Dense + Sparse)
-
-0.4000
-
-0.1107
-
-0.1879
-
-0.6124
-
-Hybrid + Reranker
-
-0.6640
-
-0.1687
-
-0.2480
-
-0.8647
-
-Analysis: While raw Hybrid search increased candidate recall (Recall@10: 0.1879) by casting a wider keyword net, it introduced noise that temporarily lowered top-level precision. The Stage 2 MS-MARCO Cross-Encoder successfully filtered this noise, resulting in a +23.8% relative gain in Precision@5 over the baseline and near-perfect first-rank relevance (MRR: 0.8647).
-
-Dataset
-
-Current Corpus:
-
-1000+ Research Papers
-
-Domains:
-
-Machine Learning
-
-Natural Language Processing
-
-Metadata Stored:
-
-Paper ID
-
-Title
-
-Abstract
-
-Authors
-
-Publication Date
-
-Categories
-
-PDF URL
-
-Source:
-
-arXiv API
-
-Tech Stack
-
-Retrieval: ChromaDB, rank-bm25
-
-Embeddings: all-MiniLM-L6-v2 (ONNX)
-
-Reranking: cross-encoder/ms-marco-MiniLM-L-6-v2
-
-LLM Provider: Ollama (Llama 3)
-
-Backend: Python 3.12+
-
-Quick Start
-
-1. Prerequisites
-
-Ensure Ollama is installed and running locally. Pull the model:
-
-ollama pull llama3
-
-
-2. Setup
-
-Clone the repository and install dependencies:
-
-python -m venv .venv
-.\.venv\Scripts\activate
-python -m pip install -r requirements.txt
-
-
-3. Build the Database
-
-Run the embedding pipeline to index the parquet dataset:
-
-python src/models/build_embeddings.py
-
-
-4. Synthesize Answers
-
-Run the master engine to interact with your research corpus:
-
-python src/models/generate_answer.py
-
-
-Repository Structure
-
-ResearchGPT/
-│
+```text
 ├── data/
-│   ├── raw/
-│   ├── processed/
-│   └── vector_store/
-│   └── evaluation/
-│
+│   ├── raw/                 # Raw arXiv PDF binaries
+│   ├── processed/           # Parquet datasets and statistics
+│   ├── vector_store/        # Local ChromaDB persisted indices
+│   └── plots/               # Generated ablation charts and visualizations
 ├── src/
-│   ├── data/
-│   ├── models/
-│   └── evaluation/
-│
-├── requirements.txt
-│
+│   ├── ingestion/           # Phase 1 & 2: PDF Parsing and Chunking Engines
+│   ├── models/              # Phase 3 & 4: Indexing, Hybrid Engines, Reranking
+│   └── evaluation/          # Phase 5: Stats tests and plot generation
 └── README.md
+```
 
-
-Roadmap
-
-Phase 1 — Core RAG
-
-[x] arXiv ingestion
-
-[x] Embedding generation
-
-[x] ChromaDB indexing
-
-[x] BM25 retrieval
-
-[x] Hybrid search
-
-[x] Cross-encoder reranking
-
-[x] Citation-based answering
-
-Phase 2 — Evaluation Framework
-
-[x] Precision@K
-
-[x] Recall@K
-
-[x] MRR
-
-[ ] nDCG
-
-[x] Retrieval benchmarking
-
-Phase 3 — Full Paper Intelligence
-
-[ ] PDF parsing
-
-[ ] Section-aware chunking
-
-[ ] Citation graph
-
-[ ] Related paper recommendations
-
-Phase 4 — Research Intelligence
-
-[ ] Paper comparison
-
-[ ] Literature review generation
-
-[ ] Research gap discovery
-
-[ ] Citation path explorer
-
-Phase 5 — Production Platform
-
-[ ] FastAPI backend
-
-[ ] React/Next.js frontend
-
-[ ] Docker deployment
-
-[ ] Monitoring
-
-[ ] CI/CD
-
-Built by Aditya Raj Gupta | ResearchGPT Evolution Cycle 2026
+### Automated Pipeline Lifecycle
+To reproduce the findings, execute the pipeline sequentially:
+1. **Phase 1 (Ingestion):** Fetch and parse academic PDFs.
+2. **Phase 2 (Chunking Engine):** Generate four distinct dataset permutations.
+3. **Phase 3 (Vector Matrix):** Build and isolate ChromaDB collections.
+4. **Phase 4 (Parameterized Retriever):** Execute hybrid retrieval and fusion scoring.
+5. **Phase 5 (Automated Benchmarking):** Run the master orchestrator (`run_full_evaluation.py`) to execute statistical tests and generate plots available in `data/processed/plots/`.
