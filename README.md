@@ -35,7 +35,7 @@ Most Retrieval-Augmented Generation (RAG) systems in production stop at a linear
 ## 3. Key Takeaways
 *   Evaluated 24 RAG pipeline configurations across multiple chunking and retrieval strategies.
 *   Hybrid Retrieval (Dense + BM25 + RRF) achieved the best balance of retrieval quality and latency.
-*   Semantic chunking produced more focused retrieval contexts than fixed-size chunking, driving higher precision.
+*   Semantic chunking generated shorter, topic-coherent chunks (309 tokens on average vs. 504 for fixed chunking), reducing context fragmentation and enabling systematic comparison against fixed and overlapping strategies.
 *   Cross-Encoder reranking improved ranking quality but increased end-to-end latency by approximately 170x on CPU.
 *   Retrieval differences between chunking strategies were tested for statistical significance using paired t-tests and Wilcoxon signed-rank tests.
 
