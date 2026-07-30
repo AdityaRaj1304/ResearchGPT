@@ -1,48 +1,81 @@
-<div align="center">
-  
-# ResearchGPT
+# ResearchGPT: Empirical RAG Architecture & Ablation Study
 
-**An Empirical Retrieval-Augmented Generation Architecture and Ablation Study**
+**Author:** Aditya Raj Gupta  
 
-[![Python](https://img.shields.io/badge/Python-3.10+-3776AB.svg?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-F7DF1E.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
-[![ChromaDB](https://img.shields.io/badge/Vector_DB-Chroma-448EE4.svg?style=for-the-badge)](https://www.trychroma.com/)
-[![HuggingFace](https://img.shields.io/badge/Models-HuggingFace-FFD21E.svg?style=for-the-badge&logo=huggingface&logoColor=black)](https://huggingface.co/)
-[![Groq](https://img.shields.io/badge/Inference-Groq-f55036.svg?style=for-the-badge)](https://groq.com/)
+## 1. Project Abstract
+Most Retrieval-Augmented Generation (RAG) systems in production stop at a linear pipeline: `PDF -> Embedding -> Vector DB -> LLM`. While this builds a functional prototype, it masks underlying structural inefficiencies. **ResearchGPT** is a rigorous systems engineering ablation study that systematically evaluates how document chunking strategies, hybrid retrieval architectures, and context sizes impact retrieval quality and latency on full-length academic PDFs.
 
-</div>
-
----
-
-## 1. Project Overview
-
-Most production Retrieval-Augmented Generation (RAG) applications operate as naive wrappers: ingesting raw documents, splitting text arbitrarily, and passing top vector matches directly into an LLM. While this produces a working prototype, it conceals severe retrieval bottlenecks, context dilution, and unnecessary latency spikes.
-
-**ResearchGPT** was engineered to answer a core systems question: **How do specific architectural choices in document chunking, hybrid search, and neural reranking quantitatively impact retrieval precision, latency, and downstream generation faithfulness?**
-
-To solve this, ResearchGPT executes an automated **24-pipeline ablation study** over full-length academic research papers, benchmarking every architectural permutation against deterministic metrics ($nDCG@K$, $Precision@K$, $Recall@K$, $MRR$) and evaluating statistical significance ($p < 0.05$).
+### Typical RAG vs. ResearchGPT
+| Feature | Typical RAG | ResearchGPT |
+| :--- | :--- | :--- |
+| **Pipeline Setup** | Single pipeline | 24 benchmarked configurations |
+| **Retrieval Architecture** | Basic vector search | Dense, Hybrid (RRF), Hybrid + Rerank |
+| **Evaluation Metrics** | Little to no evaluation | Precision@K, Recall@K, MRR, nDCG, Latency |
+| **Statistical Rigor** | No statistical validation | Paired t-test & Wilcoxon signed-rank tests |
+| **Reporting** | Limited analysis | Automated benchmarking and plotted distributions |
 
 ---
 
 ## 2. Project at a Glance
 
-| Metric / Parameter | System Specification |
+| Metric | Value |
 | :--- | :--- |
-| **Research Papers Ingested** | 20 Full Scientific PDFs (arXiv `cs.CL`, `cs.LG`) |
-| **Total Indexed Chunks** | 2,735 Chunks across 4 Isolated Collections |
-| **Chunking Strategies Evaluated** | 4 (Whole-Doc, Fixed 512, Overlap 512/128, Bounded Semantic) |
-| **Retrieval Architectures** | 3 (Dense Vector, Hybrid RRF, Hybrid + Neural Cross-Encoder) |
-| **Context Cutoff Sizes ($Top-K$)** | $K = 3$ and $K = 5$ |
-| **Total Experimental Permutations** | 24 Pipeline Configurations ($4 \times 3 \times 2$) |
+| **Research Papers** | 20 (Full academic PDFs) |
+| **Chunking Strategies** | 4 |
+| **Retrieval Architectures** | 3 |
+| **Evaluation Configurations** | 24 |
+| **ChromaDB Collections** | 4 |
+| **Indexed Chunks** | 2,735 |
 | **Embedding Model** | `BAAI/bge-small-en-v1.5` (384 Dimensions) |
-| **Neural Reranker Model** | `cross-encoder/ms-marco-MiniLM-L-6-v2` |
-| **Evaluation Suite** | Deterministic Ranking Metrics + LLM-as-a-Judge (`Llama-3.3-70B`) |
-| **Statistical Hypothesis Tests** | Paired t-test, Wilcoxon Signed-Rank Test ($p < 0.05$) |
-| **Hardware Environment** | Intel Arc Integrated Graphics & Local CPU (Batch Size 128) |
+| **Evaluation Metrics** | Precision@K, Recall@K, MRR, nDCG |
+| **Statistical Tests** | Paired t-test, Wilcoxon |
 
 ---
 
-## 3. System Architecture
+## 3. Key Takeaways
+*   Evaluated 24 RAG pipeline configurations across multiple chunking and retrieval strategies.
+*   Hybrid Retrieval (Dense + BM25 + RRF) achieved the best balance of retrieval quality and latency.
+*   Semantic chunking produced more focused retrieval contexts than fixed-size chunking, driving higher precision.
+*   Cross-Encoder reranking improved ranking quality but increased end-to-end latency by approximately 150x on CPU.
+*   Retrieval improvements were validated using paired t-tests and Wilcoxon signed-rank tests ($p < 0.05$).
+
+---
+
+## 4. Research Contributions
+*   **Designed and benchmarked** 24 Retrieval-Augmented Generation pipeline configurations.
+*   **Developed** four configurable document chunking strategies, including semantic chunking with adaptive cosine-similarity boundaries.
+*   **Implemented** Hybrid Retrieval using Dense Embeddings, BM25, and Reciprocal Rank Fusion (RRF).
+*   **Integrated** Cross-Encoder reranking for second-stage retrieval refinement.
+*   **Built** an automated benchmarking framework supporting Precision@K, Recall@K, MRR, nDCG, latency profiling, and statistical significance testing.
+*   **Evaluated** answer grounding using an LLM-as-a-Judge pipeline.
+
+---
+
+## 5. Dataset & Technology Stack
+
+**Dataset Specifications**
+*   **Source:** arXiv research papers
+*   **Domain:** Natural Language Processing and Machine Learning
+*   **Validation Set:** 20 full-length academic PDFs
+*   **Document Format:** Multi-column PDFs parsed using PyMuPDF
+
+**Technology Stack**
+| Category | Technology |
+| :--- | :--- |
+| **Language** | Python 3.10+ |
+| **PDF Parsing** | PyMuPDF |
+| **Embeddings** | `BAAI/bge-small-en-v1.5` |
+| **Vector Database** | ChromaDB |
+| **Sparse Retrieval** | BM25Okapi |
+| **Fusion** | Reciprocal Rank Fusion (RRF) |
+| **Reranker** | Cross-Encoder (`ms-marco-MiniLM-L-6-v2`) |
+| **LLM Inference** | Llama-3.3-70B via Groq API |
+| **Statistics** | SciPy |
+| **Visualization** | Matplotlib, Pandas, Seaborn |
+
+---
+
+## 6. System Architecture
 
 ```mermaid
 graph TD
@@ -62,7 +95,7 @@ graph TD
 
 ---
 
-## 4. Benchmark Summary
+## 7. Benchmark Summary
 
 Highlighting the performance of the Bounded Semantic Chunking configuration.
 
@@ -86,7 +119,7 @@ Across all 24 evaluated configurations, the empirical data revealed the followin
 
 ---
 
-## 5. Visualizations & Narrative Insights
+## 8. Visualizations & Narrative Insights
 
 ### Figure 1: Semantic Chunking Produces Highly Focused Context Windows
 ![Chunk Statistics Bar](data/processed/plots/chunk_statistics_bar.png)
@@ -110,7 +143,7 @@ Across all 24 evaluated configurations, the empirical data revealed the followin
 
 ---
 
-## 6. Core Engineering Insights
+## 9. Core Engineering Insights
 
 - **Bounded Semantic Chunking Superiority:** Generating 1,122 coherent semantic chunks (~313 avg tokens) prevented mid-thought sentence severing, outperforming fixed-size windowing (688 chunks, ~504 avg tokens) in retrieval precision.
 - **Contextual Continuity via Overlap:** Sliding window overlap (512/128) increased total chunk count by 31.5% over fixed slicing, successfully rescuing boundary-truncated facts and elevating overall recall.
@@ -120,19 +153,7 @@ Across all 24 evaluated configurations, the empirical data revealed the followin
 
 ---
 
-## 7. Tech Stack & Dependencies
-
-- **Language & Runtime:** Python 3.10+
-- **PDF Parsing & Layout Analysis:** PyMuPDF (fitz) with spatial block sorting
-- **Embeddings & Vector Store:** BAAI/bge-small-en-v1.5, ChromaDB (HNSW Cosine Space)
-- **Sparse Indexing:** rank_bm25 (BM25Okapi)
-- **Reranking Engine:** cross-encoder/ms-marco-MiniLM-L-6-v2
-- **Evaluation & Statistical Testing:** SciPy, Matplotlib, Seaborn
-- **LLM Judge:** Llama-3.3-70B-Versatile via Groq API
-
----
-
-## 8. Reproduction & Pipeline Execution
+## 10. Reproduction & Pipeline Execution
 
 To replicate the 24-pipeline study from scratch:
 
