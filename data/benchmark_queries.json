@@ -2,28 +2,36 @@
   {
     "query_id": "Q01",
     "query": "How to evaluate localization precision for LLM unlearning?",
-    "relevant_paper_ids": ["2607.02513v1"],
+    "relevant_paper_ids": [
+      "2606.29094v1"
+    ],
     "topic": "LLM Unlearning",
     "difficulty": "Medium"
   },
   {
     "query_id": "Q02",
     "query": "What is the Program-as-Weights programming paradigm?",
-    "relevant_paper_ids": ["2607.02512v1"],
+    "relevant_paper_ids": [
+      "2606.29082v1"
+    ],
     "topic": "Programming Paradigms",
     "difficulty": "Easy"
   },
   {
     "query_id": "Q03",
     "query": "How is online safety monitoring implemented for LLMs?",
-    "relevant_paper_ids": ["2607.02510v1"],
+    "relevant_paper_ids": [
+      "2606.29117v1"
+    ],
     "topic": "LLM Safety",
     "difficulty": "Medium"
   },
   {
     "query_id": "Q04",
     "query": "What social structures emerge in multi-agent debates when no one is watching?",
-    "relevant_paper_ids": ["2607.02507v1"],
+    "relevant_paper_ids": [
+      "2606.29121v1"
+    ],
     "topic": "Multi-Agent Systems",
     "difficulty": "Hard"
   }

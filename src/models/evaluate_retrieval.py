@@ -7,6 +7,7 @@ import os
 import json
 import time
 import sys
+import re
 import numpy as np
 import pandas as pd
 from openai import OpenAI
@@ -16,6 +17,19 @@ from advanced_retriever import ParameterizedRetriever
 COLLECTIONS = ["arxiv_wholedoc", "arxiv_fixed_512", "arxiv_overlap_512_128", "arxiv_semantic"]
 STRATEGIES = ["dense", "hybrid", "hybrid_rerank"]
 CUTOFFS = [3, 5]
+
+def normalize_paper_id(paper_id_str: str) -> str:
+    if not paper_id_str:
+        return ""
+    # Convert to string and lowercase
+    s = str(paper_id_str).strip().lower()
+    # Strip file extensions and URLs
+    s = s.replace(".pdf", "").split("/")[-1]
+    # Extract standard arXiv ID pattern (e.g., '2401.12345' from '2401.12345v1')
+    match = re.search(r'\d{4}\.\d{4,5}', s)
+    if match:
+        return match.group(0)
+    return s
 
 class BenchmarkEvaluator:
     def __init__(self, benchmark_path="data/benchmark_queries.json"):
@@ -119,11 +133,13 @@ Return ONLY a JSON object: {"citation_support_rate": 0.0 to 100.0, "unsupported_
                     else:
                         docs, timings = retriever.search_hybrid_rerank(q_text, top_k=10)
                         
-                    rel_array = [1 if d["metadata"].get("paper_id") in rel_ids else 0 for d in docs]
-                    total_rel_papers = len(rel_ids)
+                    relevant_ids_normalized = {normalize_paper_id(pid) for pid in rel_ids}
+                    
+                    rel_array = [1 if normalize_paper_id(d["metadata"].get("paper_id")) in relevant_ids_normalized else 0 for d in docs]
+                    total_rel_papers = len(relevant_ids_normalized)
                     
                     # Recall@10
-                    retrieved_rel_papers_10 = len(set([d["metadata"].get("paper_id") for d in docs if d["metadata"].get("paper_id") in rel_ids]))
+                    retrieved_rel_papers_10 = len({normalize_paper_id(d["metadata"].get("paper_id")) for d in docs if normalize_paper_id(d["metadata"].get("paper_id")) in relevant_ids_normalized})
                     r_10 = retrieved_rel_papers_10 / total_rel_papers if total_rel_papers > 0 else 0
                     
                     for k in CUTOFFS:
@@ -131,7 +147,7 @@ Return ONLY a JSON object: {"citation_support_rate": 0.0 to 100.0, "unsupported_
                         k_rel_array = rel_array[:k]
                         
                         p_k = sum(k_rel_array) / k if k > 0 else 0
-                        retrieved_rel_papers_k = len(set([d["metadata"].get("paper_id") for d in k_docs if d["metadata"].get("paper_id") in rel_ids]))
+                        retrieved_rel_papers_k = len({normalize_paper_id(d["metadata"].get("paper_id")) for d in k_docs if normalize_paper_id(d["metadata"].get("paper_id")) in relevant_ids_normalized})
                         r_k = retrieved_rel_papers_k / total_rel_papers if total_rel_papers > 0 else 0
                         
                         mrr = 0.0

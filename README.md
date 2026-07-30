@@ -88,7 +88,19 @@ The vectorization ingestion pipeline and the 24-pipeline evaluation matrix were 
 
 ---
 
-## 7. Visualizations
+## 7. Overall Top Benchmark Metrics
+
+Across the 24 evaluated configurations, the empirical data revealed the following peak retrieval performance bounds:
+
+| Metric | Top Score | Winning Pipeline (Collection + Strategy + Cutoff) |
+| :--- | :--- | :--- |
+| **Best nDCG** | **1.000** | `arxiv_wholedoc` / `dense` / Top-5 |
+| **Best Precision** | **0.500** | `arxiv_fixed_512` / `dense` / Top-5 |
+| **Best Recall** | **1.000** | `arxiv_fixed_512` / `dense` / Top-5 |
+
+---
+
+## 8. Visualizations
 
 The automated evaluation suite generated the following performance distributions.
 
