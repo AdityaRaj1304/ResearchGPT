@@ -9,6 +9,8 @@ import {
 } from "lucide-react";
 import { ResearchAssistant } from "./components/ResearchAssistant";
 import { BenchmarkExplorer } from "./components/BenchmarkExplorer";
+import { RetrievalLab } from "./components/RetrievalLab";
+import { SystemOverview } from "./components/SystemOverview";
 import { researchApi } from "./api/client";
 import type { HealthResponse } from "./types/api";
 
@@ -141,9 +143,6 @@ export const App: React.FC = () => {
             >
               <Layers className="w-4 h-4" />
               Retrieval Lab
-              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 ml-1">
-                Stage 2
-              </span>
             </button>
 
             <button
@@ -157,9 +156,6 @@ export const App: React.FC = () => {
             >
               <Server className="w-4 h-4" />
               System Overview
-              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 ml-1">
-                Stage 2
-              </span>
             </button>
           </nav>
         </div>
@@ -169,38 +165,8 @@ export const App: React.FC = () => {
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {activeTab === "assistant" && <ResearchAssistant />}
         {activeTab === "benchmarks" && <BenchmarkExplorer />}
-
-        {activeTab === "lab" && (
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-10 text-center space-y-4">
-            <div className="p-3 w-12 h-12 mx-auto rounded-xl bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 flex items-center justify-center">
-              <Layers className="w-6 h-6" />
-            </div>
-            <h3 className="text-base font-bold text-slate-200">
-              Retrieval Lab (Stage 2 Component)
-            </h3>
-            <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
-              Stage 1 focus is complete (Research Assistant & Benchmark Explorer).
-              The side-by-side Retrieval Lab comparison grid will be implemented in Stage 2
-              upon your explicit approval.
-            </p>
-          </div>
-        )}
-
-        {activeTab === "system" && (
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-10 text-center space-y-4">
-            <div className="p-3 w-12 h-12 mx-auto rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center">
-              <Server className="w-6 h-6" />
-            </div>
-            <h3 className="text-base font-bold text-slate-200">
-              System Overview (Stage 2 Component)
-            </h3>
-            <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
-              Stage 1 focus is complete (Research Assistant & Benchmark Explorer).
-              Detailed vector index telemetry, memory profiling, and model diagnostics
-              will be connected in Stage 2 upon your explicit approval.
-            </p>
-          </div>
-        )}
+        {activeTab === "lab" && <RetrievalLab />}
+        {activeTab === "system" && <SystemOverview />}
       </main>
 
       {/* Footer */}

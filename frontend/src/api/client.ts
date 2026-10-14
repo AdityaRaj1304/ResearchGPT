@@ -4,6 +4,7 @@ import type {
   QueryResponse,
   CompareRequest,
   CompareResponse,
+  ComparisonCell,
   BenchmarkSummaryResponse,
   HealthResponse,
   CollectionsResponse,
@@ -46,23 +47,29 @@ export const researchApi = {
     }>("/collections");
 
     const rawStats = data.index_statistics || [];
+    const getNum = (val: unknown): number | undefined => {
+      if (val === undefined || val === null || val === "") return undefined;
+      const n = Number(val);
+      return isNaN(n) ? undefined : n;
+    };
+
     const normalizedStats: IndexStatRow[] = rawStats.map((item) => ({
       collection: String(item.collection || item.Collection || "Unknown"),
-      vectors: Number(item.vectors ?? item.Vectors ?? 0),
-      total_storage_mb: Number(
-        item.total_storage_mb ?? item["Total Storage Footprint (MB)"] ?? 0
+      vectors: getNum(item.vectors ?? item.Vectors) ?? 0,
+      total_storage_mb: getNum(
+        item.total_storage_mb ?? item["Total Storage Footprint (MB)"]
       ),
-      storage_efficiency: Number(
-        item.storage_efficiency ?? item["Storage Efficiency (MB per 1k)"] ?? 0
+      storage_efficiency: getNum(
+        item.storage_efficiency ?? item["Storage Efficiency (MB per 1k)"]
       ),
-      total_build_time_s: Number(
-        item.total_build_time_s ?? item["Total Build Time (s)"] ?? 0
+      total_build_time_s: getNum(
+        item.total_build_time_s ?? item["Total Build Time (s)"]
       ),
-      avg_embedding_ms: Number(
-        item.avg_embedding_ms ?? item["Avg Embedding Time (ms/vec)"] ?? 0
+      avg_embedding_ms: getNum(
+        item.avg_embedding_ms ?? item["Avg Embedding Time (ms/vec)"]
       ),
-      avg_insertion_ms: Number(
-        item.avg_insertion_ms ?? item["Avg Insertion Time (ms/vec)"] ?? 0
+      avg_insertion_ms: getNum(
+        item.avg_insertion_ms ?? item["Avg Insertion Time (ms/vec)"]
       ),
       dimension: 384,
     }));
@@ -80,11 +87,50 @@ export const researchApi = {
   },
 
   compareAblation: async (payload: CompareRequest): Promise<CompareResponse> => {
-    const { data } = await apiClient.post<CompareResponse>(
-      "/ablation/compare",
-      payload
-    );
-    return data;
+    const { data } = await apiClient.post<{
+      query?: string;
+      top_k?: number;
+      comparisons?: Record<string, unknown>[];
+    }>("/ablation/compare", payload);
+
+    const rawComparisons = data.comparisons || [];
+    const normalizedComparisons: ComparisonCell[] = rawComparisons.map((c) => {
+      const rawTimings = (c.timings as Record<string, unknown>) || {};
+      const getNum = (val: unknown): number | undefined => {
+        if (val === undefined || val === null || val === "") return undefined;
+        const n = Number(val);
+        return isNaN(n) ? undefined : n;
+      };
+
+      return {
+        collection: String(c.collection || ""),
+        strategy: String(c.strategy || ""),
+        retrieved_paper_ids: Array.isArray(c.retrieved_paper_ids)
+          ? c.retrieved_paper_ids.map(String)
+          : [],
+        top_chunk_preview:
+          typeof c.top_chunk_preview === "string" ? c.top_chunk_preview : "",
+        timings: {
+          embedding_ms: getNum(rawTimings.embedding_ms ?? rawTimings.query_embedding_ms),
+          query_embedding_ms: getNum(rawTimings.query_embedding_ms ?? rawTimings.embedding_ms),
+          dense_ms: getNum(rawTimings.dense_ms ?? rawTimings.dense_search_ms),
+          dense_search_ms: getNum(rawTimings.dense_search_ms ?? rawTimings.dense_ms),
+          sparse_bm25_ms: getNum(rawTimings.sparse_bm25_ms ?? rawTimings.sparse_search_ms),
+          sparse_search_ms: getNum(rawTimings.sparse_search_ms ?? rawTimings.sparse_bm25_ms),
+          rrf_fusion_ms: getNum(rawTimings.rrf_fusion_ms ?? rawTimings.rrf_merge_ms),
+          rrf_merge_ms: getNum(rawTimings.rrf_merge_ms ?? rawTimings.rrf_fusion_ms),
+          rerank_ms: getNum(rawTimings.rerank_ms),
+          total_retrieval_ms: getNum(rawTimings.total_retrieval_ms),
+          total_ms: getNum(rawTimings.total_ms ?? rawTimings.total_retrieval_ms),
+        },
+      };
+    });
+
+    return {
+      query: data.query || payload.query,
+      top_k: data.top_k ?? payload.top_k,
+      comparisons: normalizedComparisons,
+    };
   },
 
   getBenchmarkSummary: async (): Promise<BenchmarkSummaryResponse> => {
@@ -101,9 +147,10 @@ export const researchApi = {
       cutoff: Number(m.cutoff ?? m.Cutoff ?? m.top_k ?? m.TopK ?? 5),
       precision: Number(m.precision ?? m.Precision ?? 0),
       recall: Number(m.recall ?? m.Recall ?? 0),
-      recall_10: m.recall_10 !== undefined || m.Recall_10 !== undefined
-        ? Number(m.recall_10 ?? m.Recall_10)
-        : undefined,
+      recall_10:
+        m.recall_10 !== undefined || m.Recall_10 !== undefined
+          ? Number(m.recall_10 ?? m.Recall_10)
+          : undefined,
       mrr: Number(m.mrr ?? m.MRR ?? 0),
       ndcg: Number(m.ndcg ?? m.nDCG ?? m.ndcg_at_k ?? 0),
       citation_support_rate: Number(
