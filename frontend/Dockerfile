@@ -31,7 +31,7 @@ EXPOSE 80
 
 # Health check to ensure Nginx is serving the index page
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD wget -q --spider http://localhost:80/ || exit 1
+    CMD wget -q --spider http://127.0.0.1:80/ || exit 1
 
 # Start Nginx in foreground mode
 CMD ["nginx", "-g", "daemon off;"]
