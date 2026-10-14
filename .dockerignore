@@ -1,0 +1,44 @@
+# Git and VCS
+.git/
+.gitignore
+.gitattributes
+
+# Local Virtual Environments
+.venv/
+env/
+venv/
+ENV/
+
+# Secrets and Environment Variables
+.env
+.env.*
+!.env.example
+
+# Frontend Source (built in separate frontend container)
+frontend/
+
+# Local Data Directories (mounted as volumes at runtime)
+data/raw/
+data/vector_store/
+data/chroma_db/
+chroma_db/
+
+# Python caches and bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Tests and Scratch Files
+tests/
+scratch/
+tempCodeRunnerFile.py
+
+# IDE and OS artifacts
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

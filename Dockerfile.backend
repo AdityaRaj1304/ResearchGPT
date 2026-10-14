@@ -1,0 +1,44 @@
+# Multi-Stage / Lightweight Production Dockerfile for ResearchGPT Backend
+FROM python:3.12-slim
+
+# System configuration and environment flags
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PORT=8000 \
+    PIP_NO_CACHE_DIR=1
+
+WORKDIR /app
+
+# Install minimal OS dependencies for network health checks and building C extensions if needed
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install pinned Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Create non-root runtime user and pre-create volume mount points
+RUN useradd -m -u 1000 -s /bin/bash appuser && \
+    mkdir -p /app/data /app/data/vector_store /app/data/processed && \
+    chown -R appuser:appuser /app
+
+# Copy application source code
+COPY src/ ./src/
+
+# Ensure application files are owned by the non-root user
+RUN chown -R appuser:appuser /app
+
+# Switch to non-root user for principle of least privilege
+USER appuser
+
+# Expose internal service port (only accessible inside the Docker Compose network)
+EXPOSE 8000
+
+# Health check using existing /health endpoint
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Start FastAPI application via Uvicorn
+CMD ["uvicorn", "src.api.app:app", "--host", "0.0.0.0", "--port", "8000"]

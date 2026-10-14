@@ -13,8 +13,13 @@ import type {
   IndexStatRow,
 } from "../types/api";
 
+// Supports local development (http://localhost:8000), Vite dev proxy, and Nginx production reverse proxy (relative root)
 const API_BASE_URL =
-  import.meta.env.VITE_API_URL?.trim() || "http://localhost:8000";
+  import.meta.env.VITE_API_URL !== undefined
+    ? import.meta.env.VITE_API_URL.trim()
+    : import.meta.env.DEV
+    ? "http://localhost:8000"
+    : "";
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,

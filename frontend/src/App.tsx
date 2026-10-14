@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense, lazy } from "react";
 import {
   BookOpen,
   BarChart3,
@@ -6,13 +6,15 @@ import {
   Server,
   CheckCircle,
   ExternalLink,
+  Loader2,
 } from "lucide-react";
-import { ResearchAssistant } from "./components/ResearchAssistant";
-import { BenchmarkExplorer } from "./components/BenchmarkExplorer";
-import { RetrievalLab } from "./components/RetrievalLab";
-import { SystemOverview } from "./components/SystemOverview";
 import { researchApi } from "./api/client";
 import type { HealthResponse } from "./types/api";
+
+const ResearchAssistant = lazy(() => import("./components/ResearchAssistant"));
+const BenchmarkExplorer = lazy(() => import("./components/BenchmarkExplorer"));
+const RetrievalLab = lazy(() => import("./components/RetrievalLab"));
+const SystemOverview = lazy(() => import("./components/SystemOverview"));
 
 type TabType = "assistant" | "benchmarks" | "lab" | "system";
 
@@ -163,10 +165,24 @@ export const App: React.FC = () => {
 
       {/* Main Content Body */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {activeTab === "assistant" && <ResearchAssistant />}
-        {activeTab === "benchmarks" && <BenchmarkExplorer />}
-        {activeTab === "lab" && <RetrievalLab />}
-        {activeTab === "system" && <SystemOverview />}
+        <Suspense
+          fallback={
+            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-12 text-center space-y-3 animate-pulse">
+              <Loader2 className="w-8 h-8 animate-spin mx-auto text-indigo-400" />
+              <div className="text-sm font-semibold text-slate-300">
+                Loading view...
+              </div>
+              <p className="text-xs text-slate-500">
+                Dynamic module loading in progress
+              </p>
+            </div>
+          }
+        >
+          {activeTab === "assistant" && <ResearchAssistant />}
+          {activeTab === "benchmarks" && <BenchmarkExplorer />}
+          {activeTab === "lab" && <RetrievalLab />}
+          {activeTab === "system" && <SystemOverview />}
+        </Suspense>
       </main>
 
       {/* Footer */}

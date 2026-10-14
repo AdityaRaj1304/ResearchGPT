@@ -269,3 +269,5 @@ export const BenchmarkExplorer: React.FC = () => {
     </div>
   );
 };
+
+export default BenchmarkExplorer;

@@ -387,3 +387,5 @@ export const ResearchAssistant: React.FC = () => {
     </div>
   );
 };
+
+export default ResearchAssistant;
