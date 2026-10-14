@@ -11,17 +11,33 @@ from rank_bm25 import BM25Okapi
 from sentence_transformers import SentenceTransformer, CrossEncoder
 
 class ParameterizedRetriever:
-    def __init__(self, collection_name: str, reranker_model_name: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"):
+    def __init__(
+        self,
+        collection_name: str,
+        reranker_model_name: str = "cross-encoder/ms-marco-MiniLM-L-6-v2",
+        persist_directory: str = None,
+    ):
         self.collection_name = collection_name
         self.reranker_model_name = reranker_model_name
         self._reranker = None
         
-        db_path = "data/vector_store"
+        db_path = persist_directory or "data/vector_store"
+        if not os.path.exists(os.path.join(db_path, "chroma.sqlite3")) and os.path.exists("data/vector_store/chroma.sqlite3"):
+            db_path = "data/vector_store"
+            
         if not os.path.exists(db_path):
             raise FileNotFoundError(f"ChromaDB not found at {db_path}")
             
         self.client = chromadb.PersistentClient(path=db_path)
-        self.collection = self.client.get_collection(name=collection_name)
+        try:
+            self.collection = self.client.get_collection(name=collection_name)
+        except Exception:
+            if collection_name == "arxiv_semantic_512":
+                self.collection = self.client.get_collection(name="arxiv_semantic")
+            elif collection_name == "arxiv_semantic":
+                self.collection = self.client.get_collection(name="arxiv_semantic_512")
+            else:
+                raise
         
         # We manually load BAAI/bge-small-en-v1.5 to embed the queries 
         # (matching what was used during the build process).

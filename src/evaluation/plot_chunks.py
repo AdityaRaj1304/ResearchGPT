@@ -1,4 +1,7 @@
-import msvc_runtime
+try:
+    import msvc_runtime
+except ImportError:
+    pass
 import os
 import pandas as pd
 import matplotlib.pyplot as plt

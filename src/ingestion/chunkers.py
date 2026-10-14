@@ -1,4 +1,7 @@
-import msvc_runtime
+try:
+    import msvc_runtime
+except ImportError:
+    pass
 import nltk
 from transformers import AutoTokenizer
 from sentence_transformers import SentenceTransformer
